@@ -1,0 +1,81 @@
+# these values can be overridden by using -e with ansible-playbook!
+---
+# Information for S3
+s3_artifacts_bucket: catalyst-artifacts
+
+# Information for Nexus artifact repository.
+nexus:
+  root: https://repo.open.med.harvard.edu/nexus/service/local/artifact/maven/redirect
+  maven_repo: public
+  maven_group: net.shrine
+
+# list of .war files that will be deployed
+shrine_wars:
+  - artifact:    shrine-war
+    packaging:   war
+    target_name: shrine
+  - artifact:    shrine-proxy
+    packaging:   war
+    target_name: shrine-proxy
+  - artifact:    shrine-webclient
+    packaging:   zip
+    target_name: shrine-webclient
+    classifier:  dist
+
+# .war files deployed when using_shrine_steward is true. Will not be installed if false.
+steward_wars:
+  - artifact:    steward
+    packaging:   war
+    target_name: steward
+
+# .war files deployed when using_shrine_dashboard is true. Will not be installed if false.
+dashboard_wars:
+  - artifact:    dashboard-war
+    packaging:   war
+    target_name: shrine-dashboard
+
+# files in the shrine-webclient directory to back up during an upgrade
+webclient_backup:
+  - i2b2_config_data.js
+  - js-i2b2/cells/SHRINE/cell_config_data.js
+
+# ansible-managed configuration files
+# paths relative to tomcat_home (typically /opt/shrine/tomcat)
+shrine_webapp_config_templates:
+  - lib/shrine.conf
+  - webapps/shrine-webclient/i2b2_config_data.js
+  - webapps/shrine-webclient/js-i2b2/cells/SHRINE/cell_config_data.js
+
+steward_webapp_config_templates:
+  - lib/steward.conf
+
+dashboard_webapp_config_templates:
+  - lib/dashboard.conf
+
+# .rc files containing environment variables. Will be used by helper scripts installed in /opt/shrine.
+shrine_rc_files:
+  - name:   common
+    src:    common.rc
+    dest:   common.rc
+    bashrc: false
+    templ:  true
+  - name:   i2b2
+    src:    i2b2.rc
+    dest:   i2b2.rc
+    bashrc: true
+    templ:  true
+  - name:   i2b2-aliases
+    src:    i2b2-aliases.sh
+    dest:   i2b2-aliases.sh
+    bashrc: true
+    templ:  false
+  - name:   shrine
+    src:    shrine.rc
+    dest:   shrine.rc
+    bashrc: true
+    templ:  true
+  - name:   shrine-aliases
+    src:    shrine-aliases.sh
+    dest:   shrine-aliases.sh
+    bashrc: true
+    templ:  false

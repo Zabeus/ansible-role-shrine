@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context swallowOutput="true">
+    <Resource name="jdbc/stewardDB" auth="Container" type="javax.sql.DataSource"
+               maxActive="100" maxIdle="30" maxWait="10000"
+               username="{{ steward_db.stewardDB.owner }}" password="{{ steward_db.stewardDB.pass }}" driverClassName="com.mysql.jdbc.Driver"
+               url="jdbc:mysql://{{ steward_db.stewardDB.host }}:{{ steward_db.stewardDB.port }}/{{ steward_db.stewardDB.db }}"
+               testOnBorrow="true" validationQuery="SELECT 1"/>
+</Context>

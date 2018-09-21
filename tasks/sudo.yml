@@ -1,0 +1,6 @@
+---
+- name: install /etc/sudoers.d/shrine
+  template: src=etc/sudoers.d/shrine
+            dest=/etc/sudoers.d/{{ shrine_service_name }}
+            owner=root group=root mode=0440
+            validate='visudo -cf %s'

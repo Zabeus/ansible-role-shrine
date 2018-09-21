@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!--  JBoss Server Configuration                                           -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<!-- $Id: ont-ds.xml,v 1.5 2008/10/01 20:17:12 lcp5 Exp $ -->
+
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema">
+    <datasource jta="false" jndi-name="java:/{{ i2b2_cell.Hivedata.datasrc }}"
+    		pool-name="{{ i2b2_cell.Hivedata.datasrc }}" enabled="true" use-ccm="false">
+    		<connection-url>{{ i2b2_cell.Hivedata.jdbc_url }}</connection-url>
+    		<driver-class>org.postgresql.Driver</driver-class>
+    		<driver>postgresql-9.2-1002.jdbc4.jar</driver>
+    		<security>
+    			<user-name>{{ i2b2_cell.Hivedata.owner }}</user-name>
+    			<password>{{ i2b2_cell.Hivedata.pass }}</password>
+    		</security>
+    		<validation>
+    			<validate-on-match>false</validate-on-match>
+    			<background-validation>false</background-validation>
+    		</validation>
+    		<statement>
+    			<share-prepared-statements>false</share-prepared-statements>
+    		</statement>
+    	</datasource>
+	<datasource jta="false" jndi-name="java:/{{ i2b2_cell.Metadata.datasrc }}"
+		pool-name="{{ i2b2_cell.Metadata.datasrc }}" enabled="true" use-ccm="false">
+		<connection-url>{{ i2b2_cell.Metadata.jdbc_url }}</connection-url>
+		<driver-class>org.postgresql.Driver</driver-class>
+		<driver>postgresql-9.2-1002.jdbc4.jar</driver>
+		<security>
+			<user-name>{{ i2b2_cell.Metadata.owner }}</user-name>
+			<password>{{ i2b2_cell.Metadata.pass }}</password>
+		</security>
+		<validation>
+			<validate-on-match>false</validate-on-match>
+			<background-validation>false</background-validation>
+		</validation>
+		<statement>
+			<share-prepared-statements>false</share-prepared-statements>
+		</statement>
+	</datasource>
+    <datasource jta="false" jndi-name="java:/{{ shrine_i2b2_ont.datasrc }}"
+    		pool-name="{{ shrine_i2b2_ont.datasrc }}" enabled="true" use-ccm="false">
+    		<connection-url>{{ shrine_i2b2_ont.jdbc_url }}</connection-url>
+    		<driver-class>org.postgresql.Driver</driver-class>
+    		<driver>postgresql-9.2-1002.jdbc4.jar</driver>
+    		<security>
+    			<user-name>{{ shrine_i2b2_ont.owner }}</user-name>
+    			<password>{{ shrine_i2b2_ont.pass }}</password>
+    		</security>
+    		<validation>
+    			<validate-on-match>false</validate-on-match>
+    			<background-validation>false</background-validation>
+    		</validation>
+    		<statement>
+    			<share-prepared-statements>false</share-prepared-statements>
+    		</statement>
+    	</datasource>
+	    <datasource jta="false" jndi-name="java:/OntologyDemoDS2"
+                pool-name="OntologyDemoDS2" enabled="true" use-ccm="false">
+                <connection-url>jdbc:postgresql://127.0.0.1:5432/i2b2</connection-url>
+                <driver-class>org.postgresql.Driver</driver-class>
+                <driver>postgresql-9.2-1002.jdbc4.jar</driver>
+                <security>
+                        <user-name>i2b2</user-name>
+                        <password>demouser</password>
+                </security>
+                <validation>
+                        <validate-on-match>false</validate-on-match>
+                        <background-validation>false</background-validation>
+                </validation>
+                <statement>
+                        <share-prepared-statements>false</share-prepared-statements>
+                </statement>
+        </datasource>
+</datasources>

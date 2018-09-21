@@ -1,0 +1,4 @@
+---
+  - name: ensure settings_verified is true
+    fail: msg="settings_verified is false! Double-check that you have read through host_vars/local and that everything is set properly!"
+    when: not settings_verified

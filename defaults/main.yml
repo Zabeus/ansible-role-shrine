@@ -1,0 +1,307 @@
+---
+# SHRINE INFORMATION - defaults, can be overriden with group_vars or host_vars
+# The default values and commented-out variables here assume a standalone demo installation.
+# Do NOT change the values here in defaults/main.yml! Instead, go to host_vars/ and change the file(s) there!
+
+# Version number, as used in Nexus. Note that this playbook is only for use with 1.20.0 or newer!
+shrine_version: 1.20.1
+
+# True if running i2b2 on same machine.
+# If false, installer will skip the i2b2-SHRINE integration portion of installer, so you must do this manually!
+# The necessary files will be placed in {{shrine_home}}/i2b2-files/ (typically /opt/shrine/i2b2-files/)
+# Make sure the values in i2b2_cell are correct even if using a remote i2b2 server! The scripts will still be templated regardless.
+is_local_i2b2: true
+
+# Whether or not this node is a SHRINE hub.
+# if true: 
+#   - this node is the central hub of a SHRINE network (or a standalone SHRINE instance).
+#   - uncomment and fill in shrine_nodes with a list of sites this hub will broadcast to (aside from itself).
+# if false:
+#   - uncomment and fill in shrine_hub_url with the URL of the hub to broadcast to.
+# Chances are that this value should be set to false for most use cases.
+is_shrine_hub: true
+
+# Used for shouldQuerySelf in shrine.conf.
+# Set to true for a standalone installation or hub that is also a source of patient data.
+# Set to false for a hub that simply forwards and broadcasts queries from other nodes and does not contain its own patient data.
+shrine_should_query_self: true
+
+# Used for attachSigningCert in shrine.conf.
+# This should usually remain true, unless specifically told otherwise.
+shrine_attach_signing_cert: true
+
+# URL of remote hub this node should broadcast queries to, if not itself. 
+# This is what broadcasterServiceEndpoint in shrine.conf will be set to.
+#
+# ============================================
+# UNCOMMENT THIS IF YOU ARE NOT A NETWORK HUB!
+# ============================================
+# shrine_hub_url = https://placeholder.url:6443/shrine/rest/broadcaster/broadcast
+
+# List of nodes a SHRINE hub will broadcast to. Is used for downstreamNodes in shrine.conf.
+# Uncomment this if you are a network hub!
+# shrine_nodes:
+#  - name: "Example"
+#    url: https://placeholder.url:6443/shrine/rest/adapter/requests
+#  - name: "Example 2"
+#    url: https://placeholder2.url:6443/shrine/rest/adapter/requests
+
+# Default timeout for hub (in minutes), hub will stop waiting for responses from downstream nodes after this time
+shrine_hub_timeout_mins: 4.5
+
+# Whether or not to use the SHRINE Data Steward Application. 
+using_shrine_steward: true
+steward_topic_mode: Approved # can be "Pending", "Approved" (default), or "TopicsIgnoredJustLog"
+steward_qep_user: # user the SHRINE Data Steward Application will submit queries as
+  - name: qep
+    full_name: SHRINE Data Steward QEP User
+    pass: trustme # please change this!
+
+# Whether or not to install the SHRINE Dashboard. 
+using_shrine_dashboard: true
+
+# Core SHRINE config variables
+# ----------------------------
+
+# External address of SHRINE host, used for adding CRC cell to PM and configuring the SHRINE webclient.
+#   Override this if your public IP is different from the IP address reported by your network interface. (which is likely)
+shrine_ip: "{{ ansible_eth0.ipv4.address }}"
+
+# External domain name of SHRINE host. 
+#   By default this makes its best guess at a full domain name, but feel free to override it.
+shrine_hostname: "{{ ansible_fqdn }}"
+
+# Shell user that owns SHRINE. 
+#   This user (and all users in the group with the same name) will be able to start/stop the SHRINE Tomcat service and access the i2b2 database.
+shrine_shell_user: shrine
+
+# Name of SHRINE service. 
+#   This influences the init.d service name and SHRINE home directory name. 
+#   This can be changed to support multiple SHRINE installations on the same machine. (shrine-test, for example)
+shrine_service_name: shrine
+
+# Folder where SHRINE files will be stored. 
+#   This includes Tomcat, keystores, certs, and i2b2 database scripts.
+shrine_home: "/opt/{{ shrine_service_name }}"
+
+# Folder where the SHRINE installer will store i2b2 database scripts and datasources. 
+#   These can be copied to a remote i2b2 machine if needed.
+shrine_i2b2_files: "{{ shrine_home }}/i2b2-files"
+
+# Human-readable node name that will show up in the webclient and in result lists.
+shrine_node_name: "SHRINE Node"
+
+# Database backend used for storing SHRINE query history and audit databases. 
+#   Currently only accepts "mysql".
+shrine_db_type: mysql
+
+# i2b2 domain, this should be changed for production i2b2 instances.
+#   For details on renaming an i2b2 domain, consult the following article:
+#   https://open.med.harvard.edu/wiki/display/SHRINE/Common+SHRINE+Operation+Tasks#CommonSHRINEOperationTasks-Renamei2b2Domain
+i2b2_domain: i2b2demo
+shrine_i2b2_domain: "{{ i2b2_domain }}"
+
+# Name of i2b2 project SHRINE is associated with.
+shrine_i2b2_project: SHRINE
+
+# credentials used to log in to the SHRINE webclient
+# these users should be a member of the SHRINE project (or whatever project name is set under shrine_i2b2_project)
+shrine_user:
+  - name: shrine
+    full_name: SHRINE Demo User
+    pass: demouser # please change this!
+  # - name: additional
+  # - full_name: users
+  # - pass: here
+
+# credentials used for the SHRINE adapter to connect to the local i2b2 CRC
+# this user should be a member of the i2b2 Demo project (or whatever project name is set under shrine_adapter_user.project)
+shrine_adapter_user: # formerly i2b2_demo_user
+  name: demo
+  pass: demouser # please change this!
+  domain: i2b2demo
+  project: Demo
+
+# SHRINE Adapter lockout threshold
+# After a user runs this many queries with the same result count, they will be locked out.
+# Locked-out users are unable to run queries until an administrator clears them out.
+shrine_lockout_threshold: 7
+
+# SHRINE query term to test adapter functionality (backslashes must be double-escaped)
+shrine_adapter_test_query: "\\\\\\\\SHRINE\\\\SHRINE\\\\Demographics\\\\Gender\\\\Male\\\\"
+
+# information used for generating a self-signed certificate for SHRINE
+shrine_keystore:
+  file: "{{ shrine_home }}/shrine.keystore"
+  pass: changeit # please change this!
+  alias: "{{ shrine_hostname }}" # also the CN of the certificate. Please make sure this is a valid external domain name!
+  ou: "{{ shrine_node_name }}" 
+  org: SHRINE Network
+  city: Boston
+  state: MA
+  country: US
+  caCertAlias: "{{ shrine_hostname }}"
+
+# information used for Tomcat's own HTTPS keystore. Can be different from the SHRINE keystore, but these defaults assume an identical keystore
+tomcat_keystore:
+  file: "{{ shrine_home }}/shrine.keystore"
+  pass: changeit # please change this!
+  alias: "{{ shrine_hostname }}" # also the CN of the certificate. Please make sure this is a valid external domain name!
+  ou: "{{ shrine_node_name }}" 
+  org: SHRINE Network
+  city: Boston
+  state: MA
+  country: US
+
+
+# i2b2 DB information for the SHRINE ONT cell and corresponding i2b2 datasource
+shrine_i2b2_ont:
+  db:       "{{ i2b2_cell.Metadata.db }}"
+  schema:   shrine_ont
+  owner:    shrine_ont
+  pass:     demouser
+  jdbc_url: "{{ i2b2_cell.Metadata.jdbc_url }}"
+  datasrc:  OntologyShrineDS
+
+# ports for Tomcat connectors
+shrine_ports:
+  http: 6060
+  https: 6443
+
+# SHRINE DB information for its application query logs
+shrine_db:
+  shrineDB:
+    host: localhost
+    port: 3306
+    db: shrine_query_history
+    type: mysql # currently only supports mysql
+    owner: shrine
+    pass: demouser # please change this!
+  adapterAuditDB:
+    host: localhost
+    port: 3306
+    db: adapterAuditDB
+    type: mysql # currently only supports mysql
+    owner: shrine
+    pass: demouser # please change this!
+  qepAuditDB:
+    host: localhost
+    port: 3306
+    db: qepAuditDB
+    type: mysql # currently only supports mysql
+    owner: shrine
+    pass: demouser # please change this!
+
+# Steward DB information for its user and topic tracking
+steward_db:
+  stewardDB:
+    host: localhost
+    port: 3306
+    db: stewardDB
+    type: mysql # currently only supports mysql
+    owner: shrine
+    pass: demouser # please change this!
+
+## I2B2 INFORMATION
+i2b2_db_type: postgresql # currently only postgresql is supported
+i2b2_db_shell_user: postgres # used for postgres, user to execute postgres commands as
+i2b2_home: /opt/jboss # base jboss directory for i2b2
+i2b2_cell:
+  Crcdata: # CRC
+    db:       i2b2demodata
+    schema:   public
+    owner:    i2b2demodata
+    pass:     demouser
+    jdbc_url: jdbc:postgresql://localhost/i2b2demodata
+    datasrc:  QueryToolDemoDS
+    ip:       "{{ shrine_ip }}"
+  Hivedata: # HIVE
+    db:       i2b2hive
+    schema:   public
+    owner:    i2b2hive
+    pass:     demouser
+    jdbc_url: jdbc:postgresql://localhost/i2b2hive
+    datasrc:  OntologyBootStrapDS
+    ip:       "{{ shrine_ip }}"
+  Metadata: # ONT
+    db:       i2b2metadata
+    schema:   public
+    owner:    i2b2metadata
+    pass:     demouser
+    jdbc_url: jdbc:postgresql://localhost/i2b2metadata
+    datasrc:  OntologyDemoDS
+    ip:       "{{ shrine_ip }}"
+  Pmdata: # PM
+    db:       i2b2pm
+    schema:   public
+    owner:    i2b2pm
+    pass:     demouser
+    jdbc_url: jdbc:postgresql://localhost/i2b2pm
+    ip:       "{{ shrine_ip }}"
+    # datasrc: not relevant for PM cell
+
+
+# Software Dependencies
+# ---------------------
+
+# Java - used by the java.yml task (optional, not enabled by default, can bring your own Java)
+java_tarball: jdk-8u51-linux-x64.tar.gz
+java_exploded_dirname: jdk1.8.0_51
+java_fullversion: 8u51-b16
+java_download_url: http://download.oracle.com/otn-pub/java/jdk/{{ java_fullversion }}/{{ java_tarball }}
+
+# Tomcat - required to run SHRINE
+tomcat_major_ver: 7
+tomcat_full_ver: "{{ tomcat_major_ver }}.0.59"
+tomcat_exploded_dirname: apache-tomcat-{{ tomcat_full_ver }}
+tomcat_archive: "{{ tomcat_exploded_dirname }}.zip"
+tomcat_home: "{{ shrine_home }}/tomcat"
+tomcat_download_url: https://archive.apache.org/dist/tomcat/tomcat-{{ tomcat_major_ver }}/v{{ tomcat_full_ver }}/bin/{{ tomcat_archive }}
+
+
+# Other External URLs
+# -------------------
+
+# Stash URLs - used for downloading database scripts from the SHRINE repository during installation
+shrine_stash_url_base: https://open.med.harvard.edu/stash/projects/SHRINE/repos/shrine/browse
+shrine_stash_url_at_ver: "{{ 'develop' if shrine_version | version_compare('1.22.0', '>=') else ['refs%2Ftags%2F', shrine_version] | join }}"
+shrine_stash_url_suffix: "?at={{ shrine_stash_url_at_ver }}&raw"
+#shrine_stash_url_suffix: "?at=refs%2Ftags%2F{{ shrine_version }}&raw" # TODO: ensure that release branches stay around after release (1.20.1 vs 1.21.0)
+
+# shrine-ont SVN URL and filenames - used for downloading SHRINE demo data (ontology and mapping)
+shrine_ont_svn_url: https://open.med.harvard.edu/svn/shrine-ontology/SHRINE_Demo_Downloads/trunk/
+shrine_ont_sql_file: ShrineDemo.sql
+shrine_ont_schemes_sql_file: SCHEMES.sql
+shrine_ont_mapping_file_remote: AdapterMappings_i2b2_DemoData.csv
+shrine_ont_mapping_file_local: AdapterMappings.csv
+
+# database scripts to create the necessary tables for SHRINE
+shrine_db_scripts:
+  - name: hub.sql
+    repo_path: hub/broadcaster-aggregator/src/main/{{ 'sql' if shrine_version | version_compare('1.21.0', '>=') else 'resources' }}/hub.sql
+    db: "{{ shrine_db.shrineDB.db }}"
+  - name: adapter.sql
+    repo_path: adapter/adapter-service/src/main/{{ 'sql' if shrine_version | version_compare('1.21.0', '>=') else 'resources' }}/adapter.sql
+    db: "{{ shrine_db.shrineDB.db }}"
+  - name: create_broadcaster_audit_table.sql
+    repo_path: qep/service/src/main/{{ 'sql' if shrine_version | version_compare('1.21.0', '>=') else 'resources' }}/create_broadcaster_audit_table.sql
+    db: "{{ shrine_db.shrineDB.db }}"
+  - name: adapterAuditDB.sql
+    repo_path: adapter/adapter-service/src/main/sql/mysql.ddl
+    db: "{{ shrine_db.adapterAuditDB.db }}"
+  - name: qepAuditDB.sql
+    repo_path: qep/service/src/main/sql/mysql.ddl
+    db: "{{ shrine_db.qepAuditDB.db }}"
+
+# database scripts to create the necessary tables for the SHRINE Data Steward
+steward_db_scripts:
+  - name: stewardDB.sql
+    repo_path: apps/steward-app/src/main/sql/mysql.ddl
+    db: "{{ steward_db.stewardDB.db }}"
+
+# THE LAST VARIABLE TO CHANGE
+# ---------------------------
+
+# IMPORTANT - This value must be changed before the installer will run!
+# Change this to true after verifying that all the values above are correctly set.
+settings_verified: false

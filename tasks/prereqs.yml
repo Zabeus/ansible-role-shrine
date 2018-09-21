@@ -1,0 +1,7 @@
+---
+- name: install prerequisite packages
+  yum: name=unzip,wget,zip,mysql-server,mysql,python-psycopg2,MySQL-python state=present
+
+- name: start mysqld
+  service:  name=mysqld
+            state=started enabled=yes

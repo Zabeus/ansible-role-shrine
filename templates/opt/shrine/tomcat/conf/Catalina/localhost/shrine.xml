@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context swallowOutput="true">
+    <Resource name="jdbc/shrineDB" auth="Container" type="javax.sql.DataSource"
+               maxActive="100" maxIdle="30" maxWait="10000"
+               username="{{ shrine_db.shrineDB.owner }}" password="{{ shrine_db.shrineDB.pass }}" driverClassName="com.mysql.jdbc.Driver"
+               url="jdbc:mysql://{{ shrine_db.shrineDB.host }}:{{ shrine_db.shrineDB.port }}/{{ shrine_db.shrineDB.db }}"
+               testOnBorrow="true" validationQuery="SELECT 1"/>
+    <Resource name="jdbc/adapterAuditDB" auth="Container" type="javax.sql.DataSource"
+              maxActive="100" maxIdle="30" maxWait="10000"
+              username="{{ shrine_db.adapterAuditDB.owner }}" password="{{ shrine_db.adapterAuditDB.pass }}" driverClassName="com.mysql.jdbc.Driver"
+              url="jdbc:mysql://{{ shrine_db.adapterAuditDB.host }}:{{ shrine_db.adapterAuditDB.port }}/{{ shrine_db.adapterAuditDB.db }}"
+              testOnBorrow="true" validationQuery="SELECT 1"/>
+    <Resource name="jdbc/qepAuditDB" auth="Container" type="javax.sql.DataSource"
+              maxActive="100" maxIdle="30" maxWait="10000"
+              username="{{ shrine_db.qepAuditDB.owner }}" password="{{ shrine_db.qepAuditDB.pass }}" driverClassName="com.mysql.jdbc.Driver"
+              url="jdbc:mysql://{{ shrine_db.qepAuditDB.host }}:{{ shrine_db.qepAuditDB.port }}/{{ shrine_db.qepAuditDB.db }}"
+              testOnBorrow="true" validationQuery="SELECT 1"/>
+</Context>

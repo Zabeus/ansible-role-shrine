@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+{{ shrine_shell_user }} ALL=(postgres) NOPASSWD: /usr/bin/psql
+{{ shrine_shell_user }} ALL=(root) NOPASSWD: /sbin/service {{ shrine_service_name }} *
+
+%{{ shrine_shell_user }} ALL=({{ shrine_shell_user }}) NOPASSWD: ALL

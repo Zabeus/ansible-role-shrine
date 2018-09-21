@@ -1,0 +1,7 @@
+---
+- name: restart SHRINE
+  service: name={{ shrine_service_name }} state=restarted
+  
+- name: installation complete
+  debug: msg="SHRINE installation complete! After 30 seconds, check https://{{ shrine_hostname }}:{{ shrine_ports.https }}/shrine-webclient in your web browser."
+  notify: restart shrine

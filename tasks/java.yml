@@ -1,0 +1,17 @@
+---
+- name: fetch java tarball from Oracle
+  get_url: url={{ java_download_url }} dest=/var/tmp/{{ java_tarball }}
+
+- name: extract java tarball
+  command: tar -C /opt -f /var/tmp/{{ java_tarball }} -x -z
+           creates=/opt/{{ java_exploded_dirname }}
+
+- name: set ownership on /opt/{{ java_exploded_dirname }}
+  file: path=/opt/{{ java_exploded_dirname }}
+        owner=root group=root
+        state=directory recurse=yes
+
+- name: install java profile fragment
+  template: src=etc/profile.d/java.sh
+            dest=/etc/profile.d/java.sh
+            owner=root group=root mode=0644

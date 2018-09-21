@@ -1,0 +1,13 @@
+---
+# assumes Tomcat (and all other prerequisites for SHRINE) are set up by this point
+- name: download SHRINE Dashboard artifact
+  get_url:  url={{ nexus.root }}?r={{ nexus.maven_repo }}&g={{ nexus.maven_group }}&v={{ shrine_version }}&a={{ item.artifact }}&p={{ item.packaging }}&c={{ item.classifier|default() }}
+            dest={{ tomcat_home }}/webapps/{{ item.target_name }}.{{ item.packaging }}
+            validate_certs=false
+  with_items: dashboard_wars
+
+- name: template SHRINE Dashboard config file
+  template: src=opt/shrine/tomcat/{{ item }}
+            dest={{ tomcat_home }}/{{ item }}
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644
+  with_items: dashboard_webapp_config_templates

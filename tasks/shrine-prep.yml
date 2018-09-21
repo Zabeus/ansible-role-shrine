@@ -1,0 +1,46 @@
+---
+- name: template .rc files to {{ shrine_home }}
+  template: src=home/shrine/{{ item.src }}
+            dest=/home/{{ shrine_shell_user }}/{{ item.dest }}
+  with_items: shrine_rc_files
+  when: item.templ | bool
+
+- name: copy *-aliases.sh files to {{ shrine_home }}
+  copy: src=home/shrine/{{ item.src }}
+        dest=/home/{{ shrine_shell_user }}/{{ item.dest }}
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0755
+  with_items: shrine_rc_files
+  when: not (item.templ | bool)
+
+- name: copy util/ folder to {{ shrine_home }}
+  copy: src=opt/shrine/util
+        dest={{ shrine_home }}/util
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0755
+
+- name: set ownership of i2b2 and shrine helper files in home directory to {{ shrine_shell_user }}
+  file: path=/home/{{ shrine_shell_user }}/{{ item.dest }}
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0750
+  with_items: shrine_rc_files
+
+- name: set ownership of {{ shrine_home }} to {{ shrine_shell_user }}
+  file: path={{ shrine_home }}
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+        state=directory recurse=yes
+
+- name: add source lines to shrine user's .bashrc
+  lineinfile: dest=/home/{{ shrine_shell_user }}/.bashrc
+              line="source ~/{{ item.dest }}"
+              create=yes
+  with_items: shrine_rc_files
+  when: item.bashrc | bool
+
+- name: install SHRINE Tomcat init script
+  tags: initd
+  template: src=etc/init.d/shrine
+            dest=/etc/init.d/{{ shrine_service_name }}
+            owner=root group=root mode=0755
+
+- name: enable SHRINE Tomcat on boot
+  tags: initd
+  service: name={{ shrine_service_name }} enabled=yes
+  notify: restart shrine

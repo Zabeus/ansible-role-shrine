@@ -1,0 +1,82 @@
+#!/bin/bash
+
+#########
+# I2B2 Environment variables
+#
+# You can install by setting the i2b2 IP address and then using defaults.
+# You MUST change the default passwords for production operation.
+#
+# To include this script for your logon, you can add a line to your bash profile like this
+# vi ~/.bashrc
+#########
+
+COMMON_RC_FILE=common.rc
+
+if [ -f ~/${COMMON_RC_FILE} ] ; then
+  source ~/${COMMON_RC_FILE}
+elif [ -f ../../${COMMON_RC_FILE} ] ; then
+  source ../../${COMMON_RC_FILE}
+else
+  echo "Either ~/${COMMON_RC_FILE} or ../../${COMMON_RC_FILE} must be present" ; exit -1
+fi
+
+# at-a-glance way to check whether we're using Oracle or Postgres
+export I2B2_RDBMS={{ i2b2_db_type | replace("postgresql", "postgres") }}
+
+#
+#WILL NEED TO CHANGE IF NOT IN I2B2 VM
+
+#The i2b2 user Shrine should log in as.
+export SHRINE_USER={{ shrine_user[0].name }}
+
+#The plaintext password for the i2b2 user Shrine should log in as.
+export SHRINE_OBFUSCATED_WEBCLIENT_PASSWORD="{{ shrine_user[0].pass }}"
+
+#SHRINE_OBFUSCATED_WEBCLIENT_PASSWORD hashed with i2b2's password-hashing algorithm
+export SHRINE_PASSWORD_CRYPTED="{{ shrine_user[0].pass | i2b2_pass }}"
+
+#The directory containing the JBoss application server that i2b2 runs in.
+export JBOSS_HOME={{ i2b2_home }}
+if [ ! -d $JBOSS_HOME ] ; then
+  # try alternative versioned JBoss directory (used by newer VM images)
+  export JBOSS_HOME=( ${JBOSS_HOME}* ) 
+fi
+
+#A directory inside JBoss where important files will go.
+export JBOSS_DEPLOY_DIR="${JBOSS_HOME}/standalone/deployments"
+
+# Unlike Oracle, psql should already be in $PATH (typically in /usr/bin)
+# However, we will need to exec psql commands as the postgres user.
+export I2B2_DB_PSQL_USER={{ i2b2_db_shell_user }}
+
+#Postgres role for the i2b2 PM cell
+export I2B2_DB_PM_USER={{ i2b2_cell.Pmdata.owner }}
+export I2B2_DB_PM_PASSWORD={{ i2b2_cell.Pmdata.pass }}
+
+#Postgres role for the i2b2 Hive
+export I2B2_DB_HIVE_USER={{ i2b2_cell.Hivedata.owner }}
+export I2B2_DB_HIVE_PASSWORD={{ i2b2_cell.Hivedata.pass }}
+export I2B2_DB_HIVE_JDBC_URL={{ i2b2_cell.Hivedata.jdbc_url }}
+#Java DataSource name used by the i2b2 hive
+export I2B2_DB_HIVE_DATASOURCE_NAME={{ i2b2_cell.Hivedata.datasrc }}
+
+#Postgres role for the i2b2 ontology cell
+export I2B2_DB_ONT_USER={{ i2b2_cell.Metadata.owner }}
+export I2B2_DB_ONT_PASSWORD={{ i2b2_cell.Metadata.pass }}
+export I2B2_DB_ONT_JDBC_URL={{ i2b2_cell.Metadata.jdbc_url }}
+#Java DataSource name used by the i2b2 ontology cell
+export I2B2_DB_ONT_DATASOURCE_NAME={{ i2b2_cell.Metadata.datasrc }}
+
+#Postgres role for the Shrine ontology cell
+export I2B2_DB_SHRINE_ONT_USER={{ shrine_i2b2_ont.owner }}
+export I2B2_DB_SHRINE_ONT_PASSWORD={{ shrine_i2b2_ont.pass }}
+export I2B2_DB_SHRINE_ONT_JDBC_URL={{ shrine_i2b2_ont.jdbc_url }}
+#Java DataSource name used by the Shrine ontology cell
+export I2B2_DB_SHRINE_ONT_DATASOURCE_NAME={{ shrine_i2b2_ont.datasrc }}
+
+#Postgres role for the i2b2 CRC cell
+export I2B2_DB_CRC_USER={{ i2b2_cell.Crcdata.owner }}
+#Java DataSource name used by the i2b2 CRC cell
+export I2B2_DB_CRC_DATASOURCE_NAME={{ i2b2_cell.Crcdata.datasrc }}
+
+#END THINGS THAT WILL NEED TO CHANGE

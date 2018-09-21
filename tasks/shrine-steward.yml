@@ -1,0 +1,84 @@
+---
+- name: create databases for SHRINE Data Steward
+  mysql_db:     login_host={{ item.value.host }}
+                login_user=root
+                login_password=""
+                name={{ item.value.db }}
+                state=present
+  with_dict: steward_db
+
+- name: create database users for SHRINE Data Steward
+  mysql_user:   login_host={{ item.value.host }}
+                login_user=root
+                login_password=""
+                host={{ item.value.host }}
+                name={{ item.value.owner }}
+                password={{ item.value.pass }}
+                priv="{{ item.value.db }}.*:ALL"
+                append_privs=yes
+                state=present
+  with_dict: steward_db
+
+- name: prepare DB script for i2b2 PM user for SHRINE Data Steward
+  template: src=opt/shrine/i2b2-files/step7_pm_steward_qep_user.sql
+            dest={{ shrine_home }}/i2b2-files/step7_pm_steward_qep_user.sql
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: add SHRINE Data Steward QEP user to PM cell
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Pmdata.db }} < {{ shrine_home }}/i2b2-files/step7_pm_steward_qep_user.sql"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.pm_steward_imported"
+
+- name: touch .pm_steward_imported file in i2b2-files directory (remove file to add user again)
+  when: is_local_i2b2
+  file: path={{ shrine_home }}/i2b2-files/.pm_steward_imported
+        state=touch
+
+- name: ensure /var/tmp/shrine exists
+  command: mkdir -p /var/tmp/shrine
+  args:
+    creates: /var/tmp/shrine
+
+- name: download SHRINE Data Steward schema scripts to /var/tmp/shrine
+  get_url:  url={{ shrine_stash_url_base }}/{{ item.repo_path }}{{ shrine_stash_url_suffix }}
+            dest=/var/tmp/shrine/{{ item.name }}
+            force=yes
+            validate_certs=false
+  with_items: steward_db_scripts
+
+- name: create SHRINE Data Steward database tables
+  shell: mysql -D {{ item.db }} < /var/tmp/shrine/{{ item.name }}
+  args:     
+    creates: "{{ shrine_home }}/.steward_db_ready"
+  with_items: steward_db_scripts
+  ignore_errors: yes # ignore "table already exists" errors
+
+- name: touch .steward_db_ready file in SHRINE home directory (remove file to create tables again)
+  file: path={{ shrine_home }}/.steward_db_ready
+        state=touch
+
+# assumes Tomcat (and all other prerequisites for SHRINE) are set up by this point
+- name: download SHRINE Data Steward artifact
+  get_url:  url={{ nexus.root }}?r={{ nexus.maven_repo }}&g={{ nexus.maven_group }}&v={{ shrine_version }}&a={{ item.artifact }}&p={{ item.packaging }}&c={{ item.classifier|default() }}
+            dest={{ tomcat_home }}/webapps/{{ item.target_name }}.{{ item.packaging }}
+            validate_certs=false
+  with_items: steward_wars
+
+- name: template SHRINE Data Steward config file
+  template: src=opt/shrine/tomcat/{{ item }}
+            dest={{ tomcat_home }}/{{ item }}
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644
+  with_items: steward_webapp_config_templates
+
+- name: ensure {{ tomcat_home }}/conf/Catalina/localhost/ exists
+  command: mkdir -p {{ tomcat_home }}/conf/Catalina/localhost/
+  args:
+    creates: "{{ tomcat_home }}/conf/Catalina/localhost/"
+
+- name: template SHRINE Data Steward DB config file
+  template: src=opt/shrine/tomcat/conf/Catalina/localhost/steward.xml
+            dest={{ tomcat_home }}/conf/Catalina/localhost/steward.xml
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644

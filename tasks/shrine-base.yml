@@ -1,0 +1,146 @@
+---
+- name: create databases for SHRINE
+  mysql_db:     login_host={{ item.value.host }}
+                login_user=root
+                login_password=""
+                name={{ item.value.db }}
+                state=present
+  with_dict: shrine_db
+
+- name: create database users for SHRINE
+  mysql_user:   login_host={{ item.value.host }}
+                login_user=root
+                login_password=""
+                host={{ item.value.host }}
+                name={{ item.value.owner }}
+                password={{ item.value.pass }}
+                priv="{{ item.value.db }}.*:ALL"
+                append_privs=yes
+                state=present
+  with_dict: shrine_db
+
+- name: ensure /var/tmp/shrine exists
+  command: mkdir -p /var/tmp/shrine
+  args:
+    creates: /var/tmp/shrine
+
+- name: download SHRINE schema scripts to /var/tmp/shrine
+  get_url:  url={{ shrine_stash_url_base }}/{{ item.repo_path }}{{ shrine_stash_url_suffix }}
+            dest=/var/tmp/shrine/{{ item.name }}
+            force=yes
+            validate_certs=false
+  with_items: shrine_db_scripts
+
+- name: create SHRINE database tables
+  shell: mysql -D {{ item.db }} < /var/tmp/shrine/{{ item.name }}
+  args:     
+    creates: "{{ shrine_home }}/.shrine_db_ready"
+  with_items: shrine_db_scripts
+  ignore_errors: yes  # ignore "table already exists" errors
+
+- name: touch .shrine_db_ready file in SHRINE home directory (remove file to create tables again)
+  file: path={{ shrine_home }}/.shrine_db_ready
+        state=touch
+
+- name: download Tomcat
+  get_url:  url={{ tomcat_download_url }}
+            dest={{ shrine_home }}/{{ tomcat_archive }}
+
+#- name: download Tomcat from S3
+#  s3: bucket={{ s3_artifacts_bucket }} mode=get
+#      object={{ tomcat_archive }}
+#      dest={{ shrine_home }}/{{ tomcat_archive }}
+#      overwrite=false
+#  environment: "{{ boto_env }}"
+
+- name: extract Tomcat
+  unarchive:  src={{ shrine_home }}/{{ tomcat_archive }}
+              dest={{ shrine_home }}/
+              copy=no
+
+- name: rename extracted Tomcat directory
+  command:  mv {{ shrine_home }}/{{ tomcat_exploded_dirname }} {{ tomcat_home }}
+            creates={{ tomcat_home }}
+
+- name: make scripts in Tomcat's bin/ directory executable
+  shell: chmod +x {{ tomcat_home }}/bin/*.sh
+
+- name: template Tomcat config file server.xml
+  template: src=opt/shrine/tomcat/conf/server.xml
+            dest={{ tomcat_home }}/conf/server.xml
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644
+
+- name: download SHRINE artifacts
+  get_url:  url={{ nexus.root }}?r={{ nexus.maven_repo }}&g={{ nexus.maven_group }}&v={{ shrine_version }}&a={{ item.artifact }}&p={{ item.packaging }}&c={{ item.classifier|default() }}
+            dest={{ tomcat_home }}/webapps/{{ item.target_name }}.{{ item.packaging }}
+            validate_certs=false
+  with_items: shrine_wars
+
+- name: extract zipped artifacts (shrine-webclient)
+  unarchive:  src={{ tomcat_home }}/webapps/{{ item.target_name }}.{{ item.packaging }} 
+              dest={{ tomcat_home }}/webapps/ 
+              copy=no
+  with_items: shrine_wars
+  when: item.packaging == "zip"
+
+- name: template SHRINE application config files
+  template: src=opt/shrine/tomcat/{{ item }}
+            dest={{ tomcat_home }}/{{ item }}
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644
+  with_items: shrine_webapp_config_templates
+
+- name: ensure {{ tomcat_home }}/conf/Catalina/localhost/ exists
+  command: mkdir -p {{ tomcat_home }}/conf/Catalina/localhost/
+  args:
+    creates: "{{ tomcat_home }}/conf/Catalina/localhost/"
+
+- name: template SHRINE DB config file
+  template: src=opt/shrine/tomcat/conf/Catalina/localhost/shrine.xml
+            dest={{ tomcat_home }}/conf/Catalina/localhost/shrine.xml
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0644
+
+- name: copy setenv.sh into tomcat/bin/
+  copy: src=opt/shrine/tomcat/bin/setenv.sh
+        dest={{ shrine_home }}/tomcat/bin/setenv.sh
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0755
+
+- name: download demo AdapterMappings file
+  get_url:  url={{ shrine_ont_svn_url }}/{{ shrine_ont_mapping_file_remote }}
+            dest={{ tomcat_home }}/lib/{{ shrine_ont_mapping_file_local }}
+            validate_certs=false
+
+- name: ensure SHRINE keystore directory exists
+  file: path={{ shrine_keystore.file | dirname }} state=directory
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0755
+
+- name: create SHRINE keystore
+  shell:  . /etc/profile && \
+          keytool -genkeypair -keysize 2048 -alias {{ shrine_keystore.alias }} \
+          -dname "CN={{ shrine_keystore.alias }}, OU={{ shrine_keystore.ou }}, O={{ shrine_keystore.org }}, L={{ shrine_keystore.city }}, S={{ shrine_keystore.state }}, C={{ shrine_keystore.country }}" \
+          -keyalg RSA \
+          -keypass {{ shrine_keystore.pass }} -storepass {{ shrine_keystore.pass }} \
+          -keystore {{ shrine_keystore.file }} -validity 7300
+          creates={{ shrine_keystore.file }}
+
+- name: ensure Tomcat HTTPS keystore directory exists
+  file: path={{ tomcat_keystore.file | dirname }} state=directory
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }} mode=0755
+
+- name: create Tomcat HTTPS keystore
+  shell:  . /etc/profile && \
+          keytool -genkeypair -keysize 2048 -alias {{ tomcat_keystore.alias }} \
+          -dname "CN={{ tomcat_keystore.alias }}, OU={{ tomcat_keystore.ou }}, O={{ tomcat_keystore.org }}, L={{ tomcat_keystore.city }}, S={{ tomcat_keystore.state }}, C={{ tomcat_keystore.country }}" \
+          -keyalg RSA \
+          -keypass {{ tomcat_keystore.pass }} -storepass {{ tomcat_keystore.pass }} \
+          -keystore {{ tomcat_keystore.file }} -validity 7300
+          creates={{ tomcat_keystore.file }}
+
+- name: export own SHRINE cert as self-signed certificate
+  shell:  . /etc/profile && \
+          keytool -export -alias {{ shrine_keystore.alias }} -storepass {{ shrine_keystore.pass }} -file {{ shrine_home }}/{{ shrine_keystore.alias }}.cer -keystore {{ shrine_keystore.file }}
+          creates={{ shrine_home }}/{{ shrine_keystore.alias }}.cer
+
+- name: grant owner of {{ shrine_home }} to {{ shrine_shell_user }}
+  file: path={{ shrine_home }}
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+        state=directory recurse=yes

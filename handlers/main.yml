@@ -1,0 +1,3 @@
+---
+- name: restart shrine
+  service: name={{ shrine_service_name }} state=restarted

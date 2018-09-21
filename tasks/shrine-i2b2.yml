@@ -1,0 +1,132 @@
+---
+- name: create i2b2-files directory (scripts and ont-ds.xml will be placed here)
+  file: path={{ shrine_home }}/i2b2-files 
+        owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+        state=directory mode=0755
+
+- name: prepare DB script for hive lookups (add references to SHRINE CRC and SHRINE ONT)
+  template: src=opt/shrine/i2b2-files/step1_hive_lookups.sql
+            dest={{ shrine_home }}/i2b2-files/step1_hive_lookups.sql
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: prepare DB script for PM cell (add users and SHRINE project)
+  template: src=opt/shrine/i2b2-files/step2_pm_users_and_project.sql
+            dest={{ shrine_home }}/i2b2-files/step2_pm_users_and_project.sql
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: prepare DB scripts for SHRINE ontology (user, table, and table_access entry)
+  template: src=opt/shrine/i2b2-files/{{ item }}
+            dest={{ shrine_home }}/i2b2-files/{{ item }}
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+  with_items:
+    - step3_ont_create_user.sql
+    - step4_ont_create_table.sql
+    - step5_ont_table_access.sql
+
+- name: prepare ont-ds.xml (adds shrine_ont datasource to i2b2's ont cell)
+  template: src=opt/shrine/i2b2-files/ont-ds.xml
+            dest={{ shrine_home }}/i2b2-files/ont-ds.xml
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: download demo SHRINE ontology data
+  get_url:  url={{ shrine_ont_svn_url }}/{{ shrine_ont_sql_file }}
+            dest={{ shrine_home }}/i2b2-files/step6.1_shrine_ont.sql
+            validate_certs=false
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: set search_path in SHRINE ontology script (for postgres)
+  lineinfile: dest={{ shrine_home }}/i2b2-files/step6.1_shrine_ont.sql
+              regexp="^SET search_path"
+              insertbefore=BOF
+              line="SET search_path TO '{{ shrine_i2b2_ont.owner }}';\n"
+
+- name: download demo SHRINE schemes table
+  get_url:  url={{ shrine_ont_svn_url }}/{{ shrine_ont_schemes_sql_file }}
+            dest={{ shrine_home }}/i2b2-files/step6.2_shrine_ont_schemes.sql
+            validate_certs=false
+            owner={{ shrine_shell_user }} group={{ shrine_shell_user }}
+
+- name: set search_path in SHRINE schemes script (for postgres)
+  lineinfile: dest={{ shrine_home }}/i2b2-files/step6.2_shrine_ont_schemes.sql
+              regexp="^SET search_path"
+              insertbefore=BOF
+              line="SET search_path TO '{{ shrine_i2b2_ont.owner }}';\n"
+
+- name: run DB script for Hive cell
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Hivedata.db }} < {{ shrine_home }}/i2b2-files/step1_hive_lookups.sql"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.hive_imported"
+
+- name: touch .hive_imported file in i2b2-files directory (remove file to have hive import run again)
+  when: is_local_i2b2
+  file: path={{ shrine_home }}/i2b2-files/.hive_imported
+        state=touch
+
+- name: run DB script for PM cell
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Pmdata.db }} < {{ shrine_home }}/i2b2-files/step2_pm_users_and_project.sql"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.pm_imported"
+
+- name: touch .pm_imported file in i2b2-files directory (remove file to have pm import run again)
+  when: is_local_i2b2
+  file: path={{ shrine_home }}/i2b2-files/.pm_imported
+        state=touch
+
+- name: run DB scripts for SHRINE ontology preparation
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Metadata.db }} < {{ shrine_home }}/i2b2-files/{{ item }}"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.ont_imported"
+  with_items:
+    - step3_ont_create_user.sql
+    - step4_ont_create_table.sql
+    - step5_ont_table_access.sql
+
+- name: run DB script to insert SHRINE ontology data (this may take a few minutes)
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Metadata.db }} < {{ shrine_home }}/i2b2-files/step6.1_shrine_ont.sql"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.ont_imported"
+
+- name: touch .ont_imported file in i2b2-files directory (remove file to have ontology import run again)
+  when: is_local_i2b2
+  file: path={{ shrine_home }}/i2b2-files/.ont_imported
+        state=touch
+
+- name: run DB script to insert SHRINE schemes data (this may take a few minutes)
+  when: is_local_i2b2
+  shell: "psql -U {{ i2b2_db_shell_user }} -d {{ i2b2_cell.Metadata.db }} < {{ shrine_home }}/i2b2-files/step6.2_shrine_ont_schemes.sql"
+  sudo: yes
+  sudo_user: "{{ i2b2_db_shell_user }}"
+  args:
+    creates: "{{ shrine_home }}/i2b2-files/.schemes_imported"
+
+- name: touch .schemes_imported file in i2b2-files directory (remove file to have schemes import run again)
+  when: is_local_i2b2
+  file: path={{ shrine_home }}/i2b2-files/.schemes_imported
+        state=touch
+
+#- name: stop i2b2 (in preparation for ont-ds.xml replacement)
+#  when: is_local_i2b2
+#  shell: . /etc/profile && {{ i2b2_home }}/bin/jboss-cli.sh --connect --command=:shutdown
+#  ignore_errors: true # ignore failure when stopping an already stopped i2b2
+
+- name: replace ont-ds.xml with SHRINE-aware ont-ds.xml
+  when: is_local_i2b2
+  template: src=opt/shrine/i2b2-files/ont-ds.xml
+            dest={{ i2b2_home }}/standalone/deployments/ont-ds.xml
+            backup=yes 
+
+#- name: start i2b2 again
+#  when: is_local_i2b2
+#  shell: . /etc/profile && {{ i2b2_home }}/bin/standalone.sh > /dev/null &

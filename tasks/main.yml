@@ -1,0 +1,23 @@
+---
+- include: ready_to_install.yml
+  tags: shrine,ready_to_install
+- include: prereqs.yml
+  tags: shrine,prereqs
+- include: sudo.yml
+  tags: shrine,sudo
+#- include: java.yml
+#  tags: shrine,java
+- include: shrine-prep.yml
+  tags: shrine,shrine-prep
+- include: shrine-i2b2.yml
+  tags: shrine,shrine-i2b2
+- include: shrine-base.yml
+  tags: shrine,shrine-base
+- include: shrine-steward.yml 
+  tags: shrine,shrine-steward 
+  when: using_shrine_steward
+- include: shrine-dashboard.yml 
+  tags: shrine,shrine-dashboard
+  when: using_shrine_dashboard
+- include: shrine-finish.yml
+  tags: shrine,shrine-finish

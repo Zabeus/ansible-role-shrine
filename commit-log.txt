@@ -1,0 +1,209 @@
+commit 8a31dcac871b4e44e0df1d588bf263cf2b0b52b4
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Thu Sep 22 19:35:25 2016 -0400
+
+    simplify branch determination to just develop or tags, change DB drivers used in ont-ds.xml
+
+commit 57fd46f58d2b6f24dd02560ef0426b4eda94b99d
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue May 17 12:53:36 2016 -0400
+
+    switch Tomcat download task back to external mirror instead of S3
+
+commit 7d9115cbbb1921dc77f542efb92be1423d71e977
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 26 13:46:16 2016 -0400
+
+    add shrine_port.https to template for SHRINE cell config in webclient
+
+commit 6b44ff2a4ea57d231f179f504951be22ce25fe5d
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 26 13:06:33 2016 -0400
+
+    add ignore_errors to mysql commands (suppress "table already exists" errors)
+
+commit 80cba7e01010a20b78e2461696508a4c27a7173d
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 26 11:44:57 2016 -0400
+
+    change default shrine_home to be based on shrine_service_name
+
+commit 8f5653968f30bee3a7c5999421cb4bb37db33970
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 12 13:41:37 2016 -0400
+
+    add switch for attachSigningCert
+
+commit 0289b39268fe1212a1622438f8156eaf1214c04e
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 19:24:08 2016 -0400
+
+    add directory-exists checks to keystore creation commands
+
+commit 1427c031e9ee6383278aac1b8db98ffacbae76b2
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 19:16:48 2016 -0400
+
+    update caCertAliases source variable in .conf templates
+
+commit 6e799331448380a08f1498124432e9dbff73dd05
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 19:14:49 2016 -0400
+
+    replace command module with shell module
+
+commit 947ddff198bb5cca99448fbb5f495c1c4bce60c2
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 18:32:50 2016 -0400
+
+    remove with_fileglob+file module for tomcat_home/bin/*.sh step, use chmod +x instead
+
+commit bf5f26c417b35e014e2cb42ab15fcb5aa979cee4
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 17:16:58 2016 -0400
+
+    move adapter.create conditional onto create's line
+
+commit 5bb42f4d001b9497139ae39ce40d9aab1716fed3
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 16:22:15 2016 -0400
+
+    add support for separate Tomcat keystore
+
+commit ba1e59090292f8a136ea2161863cc177b77a5b62
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 16:12:46 2016 -0400
+
+    add vars for hub timeout and caCertAliases
+
+commit 499bc710c483e0af6a078bb55837d6ee50f6449f
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 15:48:09 2016 -0400
+
+    fix conditional on shrine.conf adapter block
+
+commit 71177414b8bb5abbc6cff49ff8667a06759f8388
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 11 15:44:42 2016 -0400
+
+    add case to shrine.conf template where an adapter will not be created
+
+commit d8583a8dd3b5ffdb4056ef05e553781435d48905
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 8 12:56:36 2016 -0400
+
+    temporary switch to s3 for tomcat artifact
+
+commit b4a657355ce331e1a9a1cba63952802088ace9f6
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Wed Apr 6 17:36:52 2016 -0400
+
+    add caveats to README.md
+
+commit 2bda269c1a50ba1c9d06bef50d34bfd91a38d65a
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 5 16:05:30 2016 -0400
+
+    shims for 1.22.0-SNAPSHOT compatibility
+
+commit 912b465d828ffab99222d36d60bd50717567057d
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Tue Apr 5 14:05:51 2016 -0400
+
+    fix privilege overwriting for MySQL user creation, set default caCertAliases to own cert, change keystore alias source var
+
+commit 28d9c55a988fc475931ce94daeb99f491417262d
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Mon Apr 4 19:48:25 2016 -0400
+
+    add missing templates for DB connectors, remove SSL cert validation for Nexus requests
+
+commit 561169bb668f62c1b580ab1ea9180fe0c6bc3167
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 17:43:39 2016 -0400
+
+    remove old plugins file (TODO: get this to load at the role level rather than playbook level)
+
+commit 6f73c07ede4e19243a6a9e5237adf2267e7d7df2
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 17:41:25 2016 -0400
+
+    reorgnize variable names and templates (some to prevent conflict with older i2b2 variables)
+
+commit ff6f195b8ce049766e7e99840d24086beddd1f5b
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 17:38:23 2016 -0400
+
+    remove traces of old installer
+
+commit a487cf11488bba4aa2fb2f8cabb47634fd9614f1
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 12:21:42 2016 -0400
+
+    another syntax error in defaults/main.yml
+
+commit 56d7a9c5c32b5a47f3c940048d97c480839b0860
+Merge: 5104699 b9dffe8
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 12:18:53 2016 -0400
+
+    Merge pull request #3 in SHRINE/ansible-role-shrine from yaml-syntax-fix to master
+    
+    * commit 'b9dffe841f403f0ebfeb18e6642cf35affe08a99':
+      fix yaml syntax issues in defaults/main.yml
+
+commit b9dffe841f403f0ebfeb18e6642cf35affe08a99
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 12:17:21 2016 -0400
+
+    fix yaml syntax issues in defaults/main.yml
+
+commit 5104699d9b7dba7ce1e4aa92d0167d8adfc71103
+Merge: 0440516 be9487b
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 12:14:42 2016 -0400
+
+    Merge pull request #2 in SHRINE/ansible-role-shrine from yaml-syntax-fix to master
+    
+    * commit 'be9487b13aad3e98e1b174d52bc5e5641376ae74':
+      fix syntax error in vars/main.yml
+
+commit be9487b13aad3e98e1b174d52bc5e5641376ae74
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 12:14:13 2016 -0400
+
+    fix syntax error in vars/main.yml
+
+commit 0440516d98c63a64d9ff22308d005aad64c891c3
+Merge: 024b324 60e56fc
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 11:32:01 2016 -0400
+
+    Merge pull request #1 in SHRINE/ansible-role-shrine from add-galaxy-meta to master
+    
+    * commit '60e56fc274fbc2cbb378b2dba7fa47e9f83a869a':
+      add meta/main.yml for Ansible Galaxy
+
+commit 60e56fc274fbc2cbb378b2dba7fa47e9f83a869a
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Fri Apr 1 11:30:43 2016 -0400
+
+    add meta/main.yml for Ansible Galaxy
+
+commit 024b32481b33f4f322aa2da29bd50ae4677fbe1e
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Wed Mar 30 19:15:00 2016 -0400
+
+    copy items on to system from files/ directory
+
+commit 6d7366ee2530d31255b588bb270dce2732bd4226
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Wed Mar 30 19:09:01 2016 -0400
+
+    add README.md
+
+commit 8f777d14a96aadfb094e3419072ad80fa844873c
+Author: Keith Dwyer <keith_dwyer@hms.harvard.edu>
+Date:   Wed Mar 30 19:06:15 2016 -0400
+
+    initial commit
